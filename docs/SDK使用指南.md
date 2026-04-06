@@ -51,6 +51,8 @@ main().catch(console.error);
 - `options.loginUrl` (string): 登录页面 URL，默认 `https://example.com/login`
 - `options.port` (number): 基础端口号，默认 `3000`
 - `options.onLog` (function): 日志回调函数
+- `options.loginStatusUrl` (string): 登录状态检测接口，不配置则不检测
+- `options.loginStatusInterval` (number): 检测间隔（毫秒），默认 `30000`
 
 **返回值：** `BrowserProxyClient` 实例
 
@@ -82,15 +84,17 @@ await client.stop();
 
 ```typescript
 interface ServiceStatus {
-  running: boolean;  // 是否运行中
-  pid?: number;      // 进程ID
-  port?: number;     // 端口号
+  running: boolean;     // 是否运行中
+  pid?: number;         // 进程ID
+  port?: number;        // 端口号
+  isLoggedIn?: boolean; // 登录状态
 }
 
 const status = client.getStatus();
-console.log(status.running);  // true
-console.log(status.pid);     // 12345
-console.log(status.port);    // 3000
+console.log(status.running);    // true
+console.log(status.pid);        // 12345
+console.log(status.port);       // 3000
+console.log(status.isLoggedIn); // true
 ```
 
 ### client.getLogs()

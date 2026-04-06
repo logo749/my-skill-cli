@@ -13,6 +13,8 @@ const __dirname = dirname(__filename);
 
 const LOGIN_URL = process.env.LOGIN_URL || 'https://example.com/login';
 const BASE_PORT = parseInt(process.env.PORT || '3000');
+const LOGIN_STATUS_URL = process.env.LOGIN_STATUS_URL;
+const LOGIN_STATUS_INTERVAL = parseInt(process.env.LOGIN_STATUS_INTERVAL || '30000');
 const PID_FILE = join(__dirname, 'server.pid');
 const LOG_FILE = join(__dirname, 'server.log');
 
@@ -100,6 +102,52 @@ async function runServerMode() {
 
   let browser: any = null;
   let context: any = null;
+  let isLoggedIn = true;
+  let statusCheckTimer: NodeJS.Timeout | null = null;
+
+  async function checkLoginStatus(): Promise<boolean> {
+    if (!LOGIN_STATUS_URL) {
+      return true;
+    }
+
+    try {
+      const reqPage = await context.newPage();
+      const response = await reqPage.request.get(LOGIN_STATUS_URL);
+      await reqPage.close();
+
+      if (response.ok()) {
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      log(`登录状态检测失败: ${error.message}`);
+      return false;
+    }
+  }
+
+  async function startStatusCheck(): Promise<void> {
+    if (!LOGIN_STATUS_URL) {
+      log('未配置登录状态检测接口，跳过检测');
+      return;
+    }
+
+    log(`启动登录状态检测，接口: ${LOGIN_STATUS_URL}，间隔: ${LOGIN_STATUS_INTERVAL}ms`);
+
+    isLoggedIn = await checkLoginStatus();
+
+    statusCheckTimer = setInterval(async () => {
+      const loggedIn = await checkLoginStatus();
+
+      if (loggedIn !== isLoggedIn) {
+        isLoggedIn = loggedIn;
+        if (isLoggedIn) {
+          log('登录状态: 已登录');
+        } else {
+          log('登录状态: 已退出');
+        }
+      }
+    }, LOGIN_STATUS_INTERVAL);
+  }
 
   try {
     log('正在启动Chrome浏览器...');
@@ -110,6 +158,9 @@ async function runServerMode() {
 
     browser.on('disconnected', () => {
       log('浏览器已关闭，服务即将退出...');
+      if (statusCheckTimer) {
+        clearInterval(statusCheckTimer);
+      }
       logStream.end();
       if (fs.existsSync(PID_FILE)) {
         fs.unlinkSync(PID_FILE);
@@ -125,6 +176,8 @@ async function runServerMode() {
 
     log(`服务器运行在 http://localhost:${ACTUAL_PORT}`);
     log('按 Ctrl+C 停止服务器\n');
+
+    await startStatusCheck();
 
     const server = http.createServer(async (req, res) => {
       res.setHeader('Access-Control-Allow-Origin', '*');
@@ -143,7 +196,16 @@ async function runServerMode() {
 
       if (pathname === '/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok', port: ACTUAL_PORT }));
+        res.end(JSON.stringify({ status: 'ok', port: ACTUAL_PORT, isLoggedIn }));
+        return;
+      }
+
+      if (!isLoggedIn) {
+        log(`请求被拒绝: 用户已退出登录`);
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: '登录状态已失效，请重新登录'
+        }));
         return;
       }
 
@@ -203,6 +265,9 @@ async function runServerMode() {
 
     process.on('SIGINT', async () => {
       log('\n正在关闭服务器...');
+      if (statusCheckTimer) {
+        clearInterval(statusCheckTimer);
+      }
       await browser.close();
       logStream.end();
       if (fs.existsSync(PID_FILE)) {
@@ -215,6 +280,9 @@ async function runServerMode() {
     log(`启动失败: ${error.message}`);
     if (browser) await browser.close();
     logStream.end();
+    if (statusCheckTimer) {
+      clearInterval(statusCheckTimer);
+    }
     process.exit(1);
   }
 }
@@ -301,6 +369,11 @@ function makeRequest(method: string, targetUrl: string, dataStr?: string): Promi
       res.on('end', () => {
         try {
           const result = JSON.parse(body);
+          if (result.error && res.statusCode === 401) {
+            console.error('请求失败:', result.error);
+            reject(new Error(result.error));
+            return;
+          }
           console.log(`响应状态: ${result.status}`);
           console.log('响应内容:', result.body);
           resolve(result);

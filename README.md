@@ -235,6 +235,8 @@ node dist/index.js stop
 |--------|--------|------|
 | LOGIN_URL | https://example.com/login | 登录页面 URL |
 | PORT | 3000 | 基础端口号 |
+| LOGIN_STATUS_URL | (无) | 登录状态检测接口，不配置则不检测 |
+| LOGIN_STATUS_INTERVAL | 30000 | 登录状态检测间隔（毫秒） |
 
 ### 运行时文件
 
