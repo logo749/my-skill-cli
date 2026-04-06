@@ -108,6 +108,15 @@ async function runServerMode() {
       channel: 'chrome',
     });
 
+    browser.on('disconnected', () => {
+      log('浏览器已关闭，服务即将退出...');
+      logStream.end();
+      if (fs.existsSync(PID_FILE)) {
+        fs.unlinkSync(PID_FILE);
+      }
+      process.exit(0);
+    });
+
     context = await browser.newContext();
     const page = await context.newPage();
 

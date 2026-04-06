@@ -98,6 +98,12 @@ class BrowserProxyClient {
       channel: 'chrome',
     });
 
+    this.browser.on('disconnected', () => {
+      this.log('浏览器已关闭，服务即将退出...');
+      this.browser = null;
+      this.context = null;
+    });
+
     this.context = await this.browser.newContext();
     const page = await this.context.newPage();
 
