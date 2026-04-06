@@ -8,8 +8,7 @@
     "build": "esbuild index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:playwright-core --external:electron --external:chromium-bidi --external:dotenv --minify",
     "build:sdk": "esbuild sdk.ts --bundle --platform=node --format=esm --outfile=dist/sdk.js --external:playwright-core --external:electron --external:chromium-bidi --external:dotenv --minify",
     "dev": "node --watch index.js",
-    "test": "npm run build && node test.js",
-    "test:watch": "node --watch test.ts",
+    "mock": "node test/mock-server.js",
     "clean": "rm -rf dist"
   },
   "exports": {
