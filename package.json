@@ -9,6 +9,7 @@
     "build:sdk": "esbuild sdk.ts --bundle --platform=node --format=esm --outfile=dist/sdk.js --external:playwright-core --external:electron --external:chromium-bidi --external:dotenv --minify",
     "dev": "node --watch index.js",
     "mock": "node test/mock-server.js",
+    "lint": "eslint index.ts sdk.ts",
     "clean": "rm -rf dist"
   },
   "exports": {
@@ -19,8 +20,13 @@
     "mycli": "./dist/index.js"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.13.14",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
     "esbuild": "^0.24.2",
-    "@types/node": "^22.13.14"
+    "eslint": "^10.2.0",
+    "typescript": "^6.0.2"
   },
   "dependencies": {
     "dotenv": "^17.4.0",

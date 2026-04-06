@@ -1,8 +1,5 @@
-import { chromium, Browser, BrowserContext, Page } from 'playwright-core';
+import { chromium, Browser, BrowserContext } from 'playwright-core';
 import 'dotenv/config';
-import http from 'http';
-import url from 'url';
-import { spawn } from 'child_process';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
