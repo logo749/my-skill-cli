@@ -81,6 +81,57 @@ node dist/index.js logs
 node dist/index.js stop
 ```
 
+## SDK 使用
+
+除了命令行工具，还可以通过 Node.js SDK 在代码中使用：
+
+### 安装和构建
+
+```bash
+npm install
+npm run build:sdk
+```
+
+### 基本用法
+
+```typescript
+import { createClient } from './dist/sdk.js';
+
+async function main() {
+  const client = createClient({
+    loginUrl: 'https://example.com/login'
+  });
+
+  await client.start();
+
+  const response = await client.get('https://api.example.com/data');
+  console.log(response.status, response.body);
+
+  await client.stop();
+}
+
+main();
+```
+
+### API 列表
+
+| 方法 | 说明 |
+|------|------|
+| `createClient(options)` | 创建客户端实例 |
+| `client.start()` | 启动浏览器服务 |
+| `client.stop()` | 停止服务 |
+| `client.getStatus()` | 获取服务状态 |
+| `client.getLogs()` | 获取日志 |
+| `client.get(url)` | 发送 GET 请求 |
+| `client.post(url, data)` | 发送 POST 请求 |
+| `client.put(url, data)` | 发送 PUT 请求 |
+| `client.delete(url)` | 发送 DELETE 请求 |
+| `client.request(method, url, data)` | 通用请求方法 |
+
+详细文档请参见 [SDK使用指南](./docs/SDK使用指南.md)
+
+---
+
 ## 命令参考
 
 ### 服务管理
@@ -126,13 +177,16 @@ node dist/index.js stop
 
 ```
 MyCLI/
-├── index.ts              # TypeScript 源代码
+├── index.ts              # CLI 入口源代码
+├── sdk.ts                # SDK 入口源代码
 ├── dist/                 # 构建输出目录
-│   └── index.js          # 构建后的可执行文件
+│   ├── index.js          # CLI 可执行文件
+│   └── sdk.js            # SDK 模块
 ├── docs/                 # 文档目录
 │   ├── 产品需求文档.md    # 产品需求文档
 │   ├── 技术架构文档.md    # 技术架构文档
-│   └── 端到端测试用例.md # 测试用例文档
+│   ├── 端到端测试用例.md # 测试用例文档
+│   └── SDK使用指南.md    # SDK 使用文档
 ├── package.json          # 项目配置
 ├── tsconfig.json         # TypeScript 配置
 ├── .env                  # 环境变量（需创建）
@@ -144,7 +198,8 @@ MyCLI/
 
 | 命令 | 说明 |
 |------|------|
-| `npm run build` | 构建项目 |
+| `npm run build` | 构建 CLI 工具 |
+| `npm run build:sdk` | 构建 SDK 模块 |
 | `npm run clean` | 清理构建文件 |
 | `npm run test` | 运行测试（构建 + 测试） |
 
@@ -250,6 +305,7 @@ MIT
 
 ## 相关文档
 
+- [SDK使用指南](./docs/SDK使用指南.md)
 - [产品需求文档](./docs/产品需求文档.md)
 - [技术架构文档](./docs/技术架构文档.md)
 - [端到端测试用例](./docs/端到端测试用例.md)
